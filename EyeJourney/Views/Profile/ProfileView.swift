@@ -1,8 +1,15 @@
 import SwiftUI
+import SwiftData
 
 struct ProfileView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \ExerciseSession.startedAt, order: .reverse)
+    private var allSessions: [ExerciseSession]
     @State private var profile = UserProfile()
-    @State private var recentSessions: [ExerciseSession] = []
+
+    private var recentSessions: [ExerciseSession] {
+        Array(allSessions.prefix(10))
+    }
 
     var body: some View {
         NavigationStack {
@@ -35,6 +42,14 @@ struct ProfileView: View {
                     }
                 }
             }
+            .task { loadProfile() }
+        }
+    }
+
+    private func loadProfile() {
+        let descriptor = FetchDescriptor<UserProfile>()
+        if let existing = try? modelContext.fetch(descriptor).first {
+            profile = existing
         }
     }
 
@@ -165,7 +180,7 @@ struct ProfileView: View {
                 Text("여행 스탬프")
                     .font(.headline)
                 Spacer()
-                Text("\(profile.stamps.count)/\(MapService.presets.count)")
+                Text("\(profile.stamps.count)/\(RouteRegion.allRegions.count)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

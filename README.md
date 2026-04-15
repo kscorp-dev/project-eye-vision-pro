@@ -5,7 +5,7 @@
 [![Platform](https://img.shields.io/badge/Platform-visionOS%202.0+-blue)]()
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange)]()
 [![License](https://img.shields.io/badge/License-MIT-green)]()
-[![Version](https://img.shields.io/badge/Version-0.2-brightgreen)]()
+[![Version](https://img.shields.io/badge/Version-0.3-brightgreen)]()
 
 ## Overview
 
@@ -158,6 +158,17 @@ EyeJourney/
 
 ## Version History
 
+### v0.3 - 통합 연결 & 데이터 영속성 (2026-04-15)
+- **Home → 운동 네비게이션 수정** — `.sheet` 트리거로 프로그램 기반 운동 즉시 시작
+- **SwiftData 연동** — `modelContainer` 앱 레벨 설정, 세션 자동 저장, 프로필 스트릭 업데이트
+- **첫 실행 온보딩** — `@AppStorage` 기반 첫 실행 감지, 5페이지 온보딩 플로우
+- **DailyMissionService 연결** — HomeView에 오늘의 미션 3종 표시, 완료 체크
+- **AchievementService 연결** — 운동 완료 시 업적 조건 자동 확인, 알림 표시
+- **SoundService 연결** — 웨이포인트 도달/콤보/운동 완료/이벤트 효과음 재생
+- **ProfileView 데이터 연동** — `@Query`로 실제 세션 데이터 표시, MapService.presets 버그 수정
+- **EventOverlay/BranchSelection 통합** — 운동 중 보너스 이벤트, 갈림길 선택 UI 활성화
+- **앱 생명주기 관리** — `scenePhase` 감시, 백그라운드 진입 시 자동 일시정지
+
 ### v0.2 - 걸어가기 모드 & 사전 로딩 (2026-04-15)
 - `PathInterpolator` 신규 — 웨이포인트 사이 대원(Great Circle) 경로 보간, ease-in-out 카메라 가감속
 - `RoutePreloader` 신규 — MKMapSnapshotter로 맵 타일 사전 캐싱, Look Around 장면 프리로드
@@ -193,11 +204,12 @@ EyeJourney/
 - [x] Phase 6: UI/UX 폴리싱
 - [x] Phase 7: 테스트 및 출시 준비
 - [x] Phase 8: 목 운동 기능 추가 (v0.1)
-- [ ] Phase 9: 인터랙션 모델 수정 (Look+Pinch)
-- [ ] Phase 10: 도시 루트 전환 (3D Flyover 확인 지역)
-- [ ] Phase 11: 카카오맵 Road View 연동 (한국)
-- [ ] Phase 12: TestFlight 베타
-- [ ] Phase 13: App Store 출시
+- [x] Phase 9: 서비스 통합 & 데이터 영속성 (v0.3)
+- [ ] Phase 10: 인터랙션 모델 수정 (Look+Pinch)
+- [ ] Phase 11: 도시 루트 전환 (3D Flyover 확인 지역)
+- [ ] Phase 12: 카카오맵 Road View 연동 (한국)
+- [ ] Phase 13: TestFlight 베타
+- [ ] Phase 14: App Store 출시
 
 ## License
 

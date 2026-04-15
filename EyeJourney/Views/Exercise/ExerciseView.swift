@@ -1,8 +1,14 @@
 import SwiftUI
+import SwiftData
 
 struct ExerciseView: View {
     @State private var viewModel: ExerciseViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Environment(SoundService.self) private var soundService
+    @Environment(AchievementService.self) private var achievementService
+
+    @Environment(\.scenePhase) private var scenePhase
 
     init(program: ExerciseProgram) {
         _viewModel = State(initialValue: ExerciseViewModel(program: program))
@@ -19,11 +25,56 @@ struct ExerciseView: View {
                 pausedView
             case .completed:
                 resultView
+            case .branching:
+                exerciseActiveView
+            }
+
+            // 이벤트 오버레이
+            if let event = viewModel.activeEvent {
+                EventOverlayView(event: event) {
+                    soundService.play(.eventAppear)
+                    viewModel.dismissEvent()
+                }
+            }
+
+            // 분기 선택
+            if let branch = viewModel.activeBranch {
+                BranchSelectionView(branch: branch) { option in
+                    soundService.play(.branchSelect)
+                    viewModel.selectBranch(option)
+                }
             }
         }
         .task {
             await viewModel.startCountdown()
         }
+        .onChange(of: viewModel.gameState) { _, newState in
+            if newState == .completed {
+                soundService.play(.exerciseComplete)
+                viewModel.saveSession(modelContext: modelContext)
+                checkAchievements()
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            switch newPhase {
+            case .background, .inactive:
+                if viewModel.gameState == .playing {
+                    viewModel.pause()
+                }
+            case .active:
+                break // 사용자가 수동으로 재개
+            @unknown default:
+                break
+            }
+        }
+    }
+
+    private func checkAchievements() {
+        let profileDescriptor = FetchDescriptor<UserProfile>()
+        let sessionDescriptor = FetchDescriptor<ExerciseSession>()
+        guard let profile = try? modelContext.fetch(profileDescriptor).first,
+              let sessions = try? modelContext.fetch(sessionDescriptor) else { return }
+        achievementService.check(profile: profile, sessions: sessions)
     }
 
     // MARK: - Countdown
@@ -177,6 +228,22 @@ struct ExerciseView: View {
             Text("운동 완료!")
                 .font(.title)
                 .fontWeight(.bold)
+
+            // 업적 알림
+            if let achievement = achievementService.pendingNotification {
+                HStack(spacing: 8) {
+                    Image(systemName: achievement.iconName)
+                        .foregroundStyle(.yellow)
+                    Text(achievement.titleLocalized)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(.yellow.opacity(0.15), in: Capsule())
+                .onAppear { soundService.play(.stampEarned) }
+                .onTapGesture { achievementService.dismissNotification() }
+            }
 
             // 결과 요약
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {

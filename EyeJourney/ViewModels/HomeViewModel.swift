@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @Observable
 final class HomeViewModel {
@@ -7,6 +8,8 @@ final class HomeViewModel {
     var hasExercisedToday: Bool = false
     var selectedProgram: ExerciseProgram?
     var showExercise = false
+
+    let dailyMissions = DailyMissionService()
 
     var recommendedProgram: ExerciseProgram {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -18,15 +21,29 @@ final class HomeViewModel {
         }
     }
 
-    init() {
-        loadData()
-    }
+    func loadData(modelContext: ModelContext) {
+        // 프로필 로드
+        let profileDescriptor = FetchDescriptor<UserProfile>()
+        if let profile = try? modelContext.fetch(profileDescriptor).first {
+            currentStreak = profile.currentStreak
+            hasExercisedToday = profile.hasExercisedToday
+        }
 
-    func loadData() {
-        // SwiftData에서 루트 및 프로필 로드
-        // 프로토타입에서는 더미 데이터 사용
-        routes = Self.sampleRoutes
-        currentStreak = 3
+        // 루트 로드
+        let routeDescriptor = FetchDescriptor<Route>(
+            sortBy: [SortDescriptor(\.regionName)]
+        )
+        let savedRoutes = (try? modelContext.fetch(routeDescriptor)) ?? []
+        routes = savedRoutes.isEmpty ? Self.sampleRoutes : savedRoutes
+
+        // 세션 로드 후 미션 체크
+        let sessionDescriptor = FetchDescriptor<ExerciseSession>(
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
+        )
+        if let profile = try? modelContext.fetch(profileDescriptor).first,
+           let sessions = try? modelContext.fetch(sessionDescriptor) {
+            dailyMissions.checkCompletion(sessions: sessions, profile: profile)
+        }
     }
 
     func startExercise() {

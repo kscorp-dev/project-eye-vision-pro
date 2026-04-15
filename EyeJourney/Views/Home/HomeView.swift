@@ -1,7 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct HomeView: View {
     @Environment(AppModel.self) private var appModel
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel = HomeViewModel()
 
     var body: some View {
@@ -14,6 +16,9 @@ struct HomeView: View {
                     // 일일 미션 카드
                     dailyMissionCard
 
+                    // 일일 미션 목록
+                    missionsSection
+
                     // 운동 프로그램 선택
                     programSection
 
@@ -23,6 +28,14 @@ struct HomeView: View {
                 .padding()
             }
             .navigationTitle("EyeJourney")
+            .sheet(isPresented: $viewModel.showExercise) {
+                if let program = viewModel.selectedProgram {
+                    ExerciseView(program: program)
+                }
+            }
+            .task {
+                viewModel.loadData(modelContext: modelContext)
+            }
         }
     }
 
@@ -111,6 +124,53 @@ struct HomeView: View {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private var missionsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("오늘의 미션")
+                    .font(.headline)
+                Spacer()
+                Text("\(viewModel.dailyMissions.completedCount)/\(viewModel.dailyMissions.todayMissions.count)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            ForEach(viewModel.dailyMissions.todayMissions, id: \.id) { mission in
+                HStack(spacing: 12) {
+                    Image(systemName: mission.iconName)
+                        .font(.title3)
+                        .foregroundStyle(mission.isCompleted ? .green : .blue)
+                        .frame(width: 32)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(mission.title)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .strikethrough(mission.isCompleted)
+                        Text(mission.description)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    if mission.isCompleted {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    } else {
+                        Text("+\(mission.rewardPoints)")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.orange)
+                    }
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
             }
         }
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import MapKit
 
 /// 맵 Flyover와 안구운동을 동시에 진행하는 통합 뷰
@@ -20,8 +21,12 @@ struct ExerciseWithMapView: View {
     @State private var phase: ExercisePhase = .loading
     @State private var countdown = 3
     @State private var isWalkingBetweenPoints = false
+    @State private var sessionSaved = false
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(SoundService.self) private var soundService
 
     private var currentWaypoint: RouteWaypoint? {
         guard currentWaypointIndex < region.waypoints.count else { return nil }
@@ -54,6 +59,14 @@ struct ExerciseWithMapView: View {
             eyeTracking.stop()
             mapService.stopFlyover()
             preloader.clearCache()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .background || newPhase == .inactive {
+                if phase == .exercise || phase == .walking {
+                    eyeTracking.stop()
+                    mapService.stopFlyover()
+                }
+            }
         }
     }
 
@@ -382,6 +395,9 @@ struct ExerciseWithMapView: View {
             score += 100 * comboMultiplier
             currentWaypointIndex += 1
 
+            soundService.play(.waypointReached)
+            if combo > 1 { soundService.play(.comboUp) }
+
             // 짧은 전환 대기
             try? await Task.sleep(for: .seconds(0.3))
         }
@@ -389,6 +405,31 @@ struct ExerciseWithMapView: View {
         // 모든 웨이포인트 완료
         phase = .completed
         eyeTracking.stop()
+        soundService.play(.exerciseComplete)
+        saveMapSession()
+    }
+
+    private func saveMapSession() {
+        guard !sessionSaved else { return }
+        sessionSaved = true
+
+        let session = ExerciseSession(routeId: UUID())
+        session.completedAt = Date()
+        session.totalPoints = score
+        session.accuracy = Double(eyeTracking.accuracy)
+        modelContext.insert(session)
+
+        let descriptor = FetchDescriptor<UserProfile>()
+        let profile: UserProfile
+        if let existing = try? modelContext.fetch(descriptor).first {
+            profile = existing
+        } else {
+            profile = UserProfile()
+            modelContext.insert(profile)
+        }
+        profile.updateStreak()
+        profile.totalSessions += 1
+        try? modelContext.save()
     }
 
     enum ExercisePhase {

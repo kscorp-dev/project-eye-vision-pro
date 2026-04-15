@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import simd
 
 @Observable
@@ -9,6 +10,9 @@ final class ExerciseViewModel {
     private let gameEngine = GameEngine()
     private let eyeTracking = EyeTrackingService()
     private let headTracking = HeadTrackingService()
+
+    // 세션 저장 완료 여부
+    var sessionSaved = false
 
     // 카운트다운
     var countdown: Int = 3
@@ -294,5 +298,49 @@ final class ExerciseViewModel {
         default:
             return []
         }
+    }
+
+    // MARK: - Events & Branches
+
+    var activeEvent: GameEvent? { gameEngine.activeEvent }
+    var activeBranch: BranchChoice? { gameEngine.activeBranch }
+
+    func dismissEvent() {
+        gameEngine.activeEvent = nil
+    }
+
+    func selectBranch(_ option: BranchOption) {
+        gameEngine.activeBranch = nil
+    }
+
+    // MARK: - Session Persistence
+
+    func saveSession(modelContext: ModelContext) {
+        guard !sessionSaved else { return }
+        sessionSaved = true
+
+        let session = ExerciseSession(routeId: UUID())
+        session.completedAt = Date()
+        session.totalPoints = score
+        session.accuracy = isNeckExercise
+            ? Double(headTracking.accuracy)
+            : Double(eyeTracking.accuracy)
+        session.averageReactionTime = gameEngine.averageReactionTime
+        modelContext.insert(session)
+
+        // 프로필 업데이트
+        let descriptor = FetchDescriptor<UserProfile>()
+        let profile: UserProfile
+        if let existing = try? modelContext.fetch(descriptor).first {
+            profile = existing
+        } else {
+            profile = UserProfile()
+            modelContext.insert(profile)
+        }
+        profile.updateStreak()
+        profile.totalSessions += 1
+        profile.totalExerciseTime += elapsedTime
+
+        try? modelContext.save()
     }
 }
