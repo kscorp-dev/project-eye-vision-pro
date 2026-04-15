@@ -124,8 +124,11 @@ struct HomeView: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 16) {
-                ForEach(viewModel.routes, id: \.id) { route in
-                    RouteCard(route: route)
+                ForEach(RouteRegion.allRegions) { region in
+                    NavigationLink(destination: RouteDetailView(region: region)) {
+                        RegionCard(region: region)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -179,18 +182,22 @@ struct ProgramCard: View {
     }
 }
 
-struct RouteCard: View {
-    let route: Route
+struct RegionCard: View {
+    let region: RouteRegion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(.blue.gradient.opacity(0.3))
+                    .fill(
+                        region.isUnlocked
+                            ? .blue.gradient.opacity(0.3)
+                            : .gray.gradient.opacity(0.2)
+                    )
                     .frame(height: 100)
 
-                if route.isUnlocked {
-                    Image(systemName: "map.fill")
+                if region.isUnlocked {
+                    Image(systemName: region.iconSystemName)
                         .font(.largeTitle)
                         .foregroundStyle(.white)
                 } else {
@@ -200,27 +207,36 @@ struct RouteCard: View {
                 }
             }
 
-            Text(route.regionNameLocalized)
+            Text(region.nameLocalized)
                 .font(.subheadline)
                 .fontWeight(.semibold)
 
             HStack {
-                Text(route.difficulty.displayName)
+                Text(region.difficulty.displayName)
                     .font(.caption2)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(difficultyColor(route.difficulty), in: Capsule())
+                    .background(difficultyColor(region.difficulty), in: Capsule())
 
                 Spacer()
 
-                Text("\(Int(route.estimatedDuration / 60))분")
+                Text("\(region.estimatedMinutes)분")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+            }
+
+            // 운동 유형 태그
+            HStack(spacing: 4) {
+                ForEach(region.exerciseTypes.prefix(2), id: \.self) { type in
+                    Image(systemName: type.iconName)
+                        .font(.caption2)
+                        .foregroundStyle(Color.forExerciseType(type))
+                }
             }
         }
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .opacity(route.isUnlocked ? 1.0 : 0.6)
+        .opacity(region.isUnlocked ? 1.0 : 0.6)
         .hoverEffect()
     }
 

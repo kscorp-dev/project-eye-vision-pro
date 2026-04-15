@@ -4,91 +4,129 @@ import SwiftUI
 /// Apple MapKit 연동 서비스 - 3D Flyover 및 지역 데이터 관리
 @Observable
 final class MapService {
-    var currentRegion: MKCoordinateRegion
-    var mapCamera: MapCamera
+    var mapCameraPosition: MapCameraPosition
     var isAnimating = false
+    var currentHeading: Double = 0
+    var flyoverProgress: Float = 0
+
+    private var animationTask: Task<Void, Never>?
 
     init() {
-        // 기본 위치: 제주도
         let jejuCenter = CLLocationCoordinate2D(latitude: 33.4996, longitude: 126.5312)
-        self.currentRegion = MKCoordinateRegion(
-            center: jejuCenter,
-            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-        )
-        self.mapCamera = MapCamera(
+        self.mapCameraPosition = .camera(MapCamera(
             centerCoordinate: jejuCenter,
-            distance: 1000,
+            distance: 5000,
             heading: 0,
-            pitch: 60
-        )
+            pitch: 45
+        ))
     }
 
-    /// 카메라를 특정 좌표로 이동
-    func moveTo(coordinate: CLLocationCoordinate2D, distance: Double = 800, pitch: Double = 60) {
-        withAnimation(.easeInOut(duration: 2.0)) {
-            mapCamera = MapCamera(
+    /// 특정 좌표로 카메라 이동
+    func moveTo(
+        coordinate: CLLocationCoordinate2D,
+        distance: Double = 800,
+        heading: Double = 0,
+        pitch: Double = 60,
+        duration: Double = 2.0
+    ) {
+        withAnimation(.easeInOut(duration: duration)) {
+            mapCameraPosition = .camera(MapCamera(
                 centerCoordinate: coordinate,
                 distance: distance,
-                heading: 0,
+                heading: heading,
                 pitch: pitch
-            )
+            ))
+            currentHeading = heading
         }
     }
 
-    /// 웨이포인트 경로를 따라 카메라 애니메이션
-    func flyAlongRoute(waypoints: [Waypoint]) async {
+    /// 지역 전체를 미리 보여주는 오버뷰 카메라
+    func showRegionOverview(_ region: RouteRegion) {
+        moveTo(
+            coordinate: region.centerCoordinate,
+            distance: region.overviewDistance,
+            heading: 0,
+            pitch: 45,
+            duration: 1.5
+        )
+    }
+
+    /// 웨이포인트 경로를 따라 3D Flyover 카메라 애니메이션
+    func flyAlongRoute(_ region: RouteRegion, speed: FlyoverSpeed = .normal) async {
+        animationTask?.cancel()
         isAnimating = true
-        for waypoint in waypoints.sorted(by: { $0.orderIndex < $1.orderIndex }) {
-            let coord = CLLocationCoordinate2D(
-                latitude: waypoint.latitude,
-                longitude: waypoint.longitude
-            )
-            moveTo(coordinate: coord, distance: 500 + waypoint.altitude)
-            try? await Task.sleep(for: .seconds(2))
+        flyoverProgress = 0
+
+        let waypoints = region.waypoints
+        let total = waypoints.count
+
+        animationTask = Task {
+            // 시작점으로 이동
+            if let first = waypoints.first {
+                moveTo(
+                    coordinate: first.coordinate,
+                    distance: first.cameraDistance,
+                    heading: first.cameraHeading,
+                    pitch: first.cameraPitch,
+                    duration: 1.5
+                )
+                try? await Task.sleep(for: .seconds(1.5))
+            }
+
+            for (index, wp) in waypoints.enumerated() {
+                guard !Task.isCancelled else { break }
+
+                let progress = Float(index + 1) / Float(total)
+                flyoverProgress = progress
+
+                moveTo(
+                    coordinate: wp.coordinate,
+                    distance: wp.cameraDistance,
+                    heading: wp.cameraHeading,
+                    pitch: wp.cameraPitch,
+                    duration: speed.interval
+                )
+
+                try? await Task.sleep(for: .seconds(speed.interval))
+            }
+
+            isAnimating = false
+            flyoverProgress = 1.0
         }
+    }
+
+    /// Flyover 중지
+    func stopFlyover() {
+        animationTask?.cancel()
         isAnimating = false
+    }
+
+    /// 두 좌표 사이의 방향(heading) 계산
+    static func heading(
+        from: CLLocationCoordinate2D,
+        to: CLLocationCoordinate2D
+    ) -> Double {
+        let dLon = to.longitude - from.longitude
+        let y = sin(dLon * .pi / 180) * cos(to.latitude * .pi / 180)
+        let x = cos(from.latitude * .pi / 180) * sin(to.latitude * .pi / 180) -
+                sin(from.latitude * .pi / 180) * cos(to.latitude * .pi / 180) * cos(dLon * .pi / 180)
+        let bearing = atan2(y, x) * 180 / .pi
+        return (bearing + 360).truncatingRemainder(dividingBy: 360)
     }
 }
 
-// MARK: - 지역 프리셋
+// MARK: - Flyover Speed
 
-extension MapService {
-    struct RegionPreset {
-        let name: String
-        let nameLocalized: String
-        let coordinate: CLLocationCoordinate2D
-        let altitude: Double
-        let thumbnailSystemName: String
+enum FlyoverSpeed: String, CaseIterable {
+    case slow = "느리게"
+    case normal = "보통"
+    case fast = "빠르게"
+
+    var interval: Double {
+        switch self {
+        case .slow: return 4.0
+        case .normal: return 2.5
+        case .fast: return 1.5
+        }
     }
-
-    static let presets: [RegionPreset] = [
-        RegionPreset(
-            name: "Jeju Olle Trail",
-            nameLocalized: "제주 올레길",
-            coordinate: CLLocationCoordinate2D(latitude: 33.2541, longitude: 126.5700),
-            altitude: 200,
-            thumbnailSystemName: "water.waves"
-        ),
-        RegionPreset(
-            name: "Swiss Alps",
-            nameLocalized: "스위스 알프스",
-            coordinate: CLLocationCoordinate2D(latitude: 46.5197, longitude: 7.9624),
-            altitude: 3000,
-            thumbnailSystemName: "mountain.2.fill"
-        ),
-        RegionPreset(
-            name: "Santorini",
-            nameLocalized: "그리스 산토리니",
-            coordinate: CLLocationCoordinate2D(latitude: 36.3932, longitude: 25.4615),
-            altitude: 300,
-            thumbnailSystemName: "building.columns.fill"
-        ),
-        RegionPreset(
-            name: "Iceland Aurora",
-            nameLocalized: "아이슬란드 오로라",
-            coordinate: CLLocationCoordinate2D(latitude: 64.1466, longitude: -21.9426),
-            altitude: 100,
-            thumbnailSystemName: "sparkles"
-        ),
-    ]
 }
