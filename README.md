@@ -91,13 +91,14 @@ EyeJourney/
 ## Roadmap
 
 - [x] Phase 1: 프로젝트 세팅 및 기획
-- [ ] Phase 2: 아이트래킹 프로토타입
-- [ ] Phase 3: MapKit 연동 및 풍경 시스템
-- [ ] Phase 4: 게임 엔진 및 운동 로직
-- [ ] Phase 5: 게이미피케이션 (스탬프, 통계)
-- [ ] Phase 6: UI/UX 폴리싱
-- [ ] Phase 7: TestFlight 베타
-- [ ] Phase 8: App Store 출시
+- [x] Phase 2: 아이트래킹 프로토타입
+- [x] Phase 3: MapKit 연동 및 풍경 시스템
+- [x] Phase 4: 게임 엔진 및 운동 로직
+- [x] Phase 5: 게이미피케이션 (스탬프, 통계)
+- [x] Phase 6: UI/UX 폴리싱
+- [x] Phase 7: 테스트 및 출시 준비
+- [ ] Phase 8: TestFlight 베타
+- [ ] Phase 9: App Store 출시
 
 ## License
 
