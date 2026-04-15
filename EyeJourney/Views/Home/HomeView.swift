@@ -177,6 +177,9 @@ struct ProgramCard: View {
         case "Lunch Refresh": return "sun.max.fill"
         case "Full Course Journey": return "globe.americas.fill"
         case "Night Relax": return "moon.stars.fill"
+        case "Neck Stretch": return "figure.mind.and.body"
+        case "Eye & Neck Combo": return "eyes.inverse"
+        case "Office Care": return "desktopcomputer"
         default: return "figure.walk"
         }
     }

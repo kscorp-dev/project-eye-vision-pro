@@ -57,12 +57,25 @@ struct ExerciseView: View {
             }
             .padding()
 
-            // 가이드 포인트 (시선 추적 대상)
-            GuidePointView(
-                position: viewModel.guidePosition,
-                progress: viewModel.dwellProgress,
-                guideType: viewModel.currentGuideType
-            )
+            if viewModel.isNeckExercise {
+                // 목 운동 가이드
+                NeckExerciseGuideView(
+                    exerciseType: viewModel.currentExerciseType,
+                    targetAngles: viewModel.neckTargetAngles,
+                    currentPitch: viewModel.currentHeadPitch,
+                    currentYaw: viewModel.currentHeadYaw,
+                    currentRoll: viewModel.currentHeadRoll,
+                    dwellProgress: viewModel.dwellProgress,
+                    safetyWarning: viewModel.neckSafetyWarning
+                )
+            } else {
+                // 눈 운동 가이드 포인트
+                GuidePointView(
+                    position: viewModel.guidePosition,
+                    progress: viewModel.dwellProgress,
+                    guideType: viewModel.currentGuideType
+                )
+            }
         }
     }
 

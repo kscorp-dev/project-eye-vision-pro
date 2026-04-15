@@ -261,6 +261,63 @@ final class GameEngine {
             return SIMD3<Float>(x, y, center.z)
         }
     }
+
+    // MARK: - 목 운동 패턴 (각도 기반: x=yaw, y=pitch, z=roll, 라디안)
+
+    /// 목 앞뒤 굴곡 (고개 끄덕이기)
+    /// pitch를 위아래로 움직이는 패턴
+    static func generateNeckFlexionPattern(
+        maxAngle: Float = 25 * .pi / 180,  // ±25°
+        pointCount: Int = 10
+    ) -> [SIMD3<Float>] {
+        (0..<pointCount).map { i in
+            let t = Float(i) / Float(pointCount - 1)
+            // 위 → 중앙 → 아래 → 중앙 반복
+            let pitch = sin(t * .pi * 2) * maxAngle
+            return SIMD3<Float>(0, pitch, 0)
+        }
+    }
+
+    /// 목 좌우 회전 (고개 돌리기)
+    /// yaw를 좌우로 움직이는 패턴
+    static func generateNeckRotationPattern(
+        maxAngle: Float = 40 * .pi / 180,  // ±40°
+        pointCount: Int = 10
+    ) -> [SIMD3<Float>] {
+        (0..<pointCount).map { i in
+            let t = Float(i) / Float(pointCount - 1)
+            // 왼쪽 → 중앙 → 오른쪽 → 중앙 반복
+            let yaw = sin(t * .pi * 2) * maxAngle
+            return SIMD3<Float>(yaw, 0, 0)
+        }
+    }
+
+    /// 목 좌우 기울이기 (귀를 어깨로)
+    /// roll을 좌우로 움직이는 패턴
+    static func generateNeckLateralTiltPattern(
+        maxAngle: Float = 20 * .pi / 180,  // ±20°
+        pointCount: Int = 10
+    ) -> [SIMD3<Float>] {
+        (0..<pointCount).map { i in
+            let t = Float(i) / Float(pointCount - 1)
+            let roll = sin(t * .pi * 2) * maxAngle
+            return SIMD3<Float>(0, 0, roll)
+        }
+    }
+
+    /// 목 원형 돌리기
+    /// pitch + yaw를 조합하여 원형 패턴
+    static func generateNeckCirclePattern(
+        radius: Float = 20 * .pi / 180,  // 20° 반경
+        pointCount: Int = 16
+    ) -> [SIMD3<Float>] {
+        (0..<pointCount).map { i in
+            let angle = Float(i) / Float(pointCount) * .pi * 2
+            let yaw = cos(angle) * radius
+            let pitch = sin(angle) * radius * 0.7  // pitch는 더 작게
+            return SIMD3<Float>(yaw, pitch, 0)
+        }
+    }
 }
 
 // MARK: - Supporting Types

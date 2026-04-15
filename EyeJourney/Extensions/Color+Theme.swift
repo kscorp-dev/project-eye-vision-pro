@@ -9,6 +9,7 @@ extension Color {
     static let exerciseSaccade = Color.orange
     static let exerciseVergence = Color.green
     static let exerciseCircular = Color.purple
+    static let exerciseNeck = Color.teal
 
     static func forExerciseType(_ type: ExerciseType) -> Color {
         switch type {
@@ -16,6 +17,8 @@ extension Color {
         case .saccade: return .exerciseSaccade
         case .vergence: return .exerciseVergence
         case .circularTracking: return .exerciseCircular
+        case .neckFlexion, .neckRotation, .neckLateralTilt, .neckCircle:
+            return .exerciseNeck
         }
     }
 }
