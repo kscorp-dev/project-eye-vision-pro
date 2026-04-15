@@ -19,6 +19,12 @@ struct OnboardingView: View {
             color: .green
         ),
         OnboardingPage(
+            iconName: "figure.mind.and.body",
+            title: "머리를 움직여 목 운동도",
+            description: "Vision Pro가 머리 방향을 추적하여\n안전한 범위 내에서 목 스트레칭을\n가이드합니다",
+            color: .teal
+        ),
+        OnboardingPage(
             iconName: "map.circle.fill",
             title: "세계를 탐험하세요",
             description: "제주도, 스위스, 산토리니, 아이슬란드\n아름다운 풍경 속에서 운동하세요",
@@ -27,7 +33,7 @@ struct OnboardingView: View {
         OnboardingPage(
             iconName: "flame.circle.fill",
             title: "매일 꾸준히",
-            description: "일일 미션과 연속 기록으로\n건강한 눈 습관을 만들어보세요",
+            description: "일일 미션과 연속 기록으로\n눈과 목 건강 습관을 만들어보세요",
             color: .red
         ),
     ]
