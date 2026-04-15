@@ -119,7 +119,7 @@ struct ExerciseView: View {
             .padding()
 
             if viewModel.isNeckExercise {
-                // 목 운동 가이드
+                // 목 운동 가이드 (핀치 불필요 — 머리 움직임으로 자동 확인)
                 NeckExerciseGuideView(
                     exerciseType: viewModel.currentExerciseType,
                     targetAngles: viewModel.neckTargetAngles,
@@ -130,14 +130,47 @@ struct ExerciseView: View {
                     safetyWarning: viewModel.neckSafetyWarning
                 )
             } else {
-                // 눈 운동 가이드 포인트
+                // 눈 운동 가이드 포인트 (Look+Pinch)
                 GuidePointView(
                     position: viewModel.guidePosition,
                     progress: viewModel.dwellProgress,
                     guideType: viewModel.currentGuideType
                 )
+
+                // 핀치 대기 안내
+                if viewModel.waitingForPinch {
+                    pinchPrompt
+                }
             }
         }
+        // Look+Pinch: 핀치(탭) 제스처로 웨이포인트 확인
+        .gesture(
+            TapGesture()
+                .onEnded {
+                    if viewModel.waitingForPinch {
+                        soundService.play(.waypointReached)
+                        viewModel.confirmWaypoint()
+                    }
+                }
+        )
+    }
+
+    /// 핀치 대기 중 안내 UI
+    private var pinchPrompt: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "hand.tap.fill")
+                .font(.system(size: 36))
+                .foregroundStyle(.green.gradient)
+                .symbolEffect(.pulse, options: .repeating)
+
+            Text("핀치하여 확인")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.green)
+        }
+        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .transition(.scale.combined(with: .opacity))
     }
 
     private var exerciseHeader: some View {

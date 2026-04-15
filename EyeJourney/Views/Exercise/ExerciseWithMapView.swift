@@ -23,6 +23,8 @@ struct ExerciseWithMapView: View {
     @State private var isWalkingBetweenPoints = false
     @State private var sessionSaved = false
     @State private var startTime: Date?
+    @State private var waitingForPinch = false
+    @State private var pinchConfirmed = false
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -54,6 +56,15 @@ struct ExerciseWithMapView: View {
                 completedOverlay
             }
         }
+        .gesture(
+            TapGesture()
+                .onEnded {
+                    if waitingForPinch {
+                        pinchConfirmed = true
+                        waitingForPinch = false
+                    }
+                }
+        )
         .task {
             if musicService.isPlaying {
                 musicService.setExerciseVolume()
@@ -213,7 +224,7 @@ struct ExerciseWithMapView: View {
         }
     }
 
-    // MARK: - Exercise (운동 중)
+    // MARK: - Exercise (운동 중 — Look+Pinch)
 
     private var exerciseOverlay: some View {
         VStack {
@@ -240,6 +251,25 @@ struct ExerciseWithMapView: View {
 
             Spacer()
 
+            // 핀치 대기 안내
+            if waitingForPinch {
+                VStack(spacing: 8) {
+                    Image(systemName: "hand.tap.fill")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.green.gradient)
+                        .symbolEffect(.pulse, options: .repeating)
+                    Text("핀치하여 확인")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.green)
+                }
+                .padding(16)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .transition(.scale.combined(with: .opacity))
+            }
+
+            Spacer()
+
             VStack(spacing: 12) {
                 if combo > 1 {
                     Text("COMBO x\(combo)")
@@ -256,7 +286,7 @@ struct ExerciseWithMapView: View {
                 }
 
                 ProgressView(value: dwellProgress)
-                    .tint(dwellProgress >= 1.0 ? .green : .blue)
+                    .tint(waitingForPinch ? .green : .blue)
                     .padding(.horizontal)
 
                 HStack {
@@ -370,12 +400,30 @@ struct ExerciseWithMapView: View {
                 try? await Task.sleep(for: .seconds(0.35))
             }
 
-            // --- 운동 구간: 웨이포인트에서 dwell 추적 ---
+            // --- 운동 구간: Look+Pinch로 웨이포인트 확인 ---
             phase = .exercise
             isWalkingBetweenPoints = false
             dwellProgress = 0
+            waitingForPinch = false
+            pinchConfirmed = false
 
-            while dwellProgress < 1.0 {
+            // 1단계: dwell로 시선 확인
+            while !pinchConfirmed {
+                if waitingForPinch {
+                    // 핀치 대기 중 — 시선이 벗어나면 리셋
+                    await eyeTracking.updateGaze()
+                    let stillLooking = eyeTracking.isLookingAt(
+                        targetPosition: SIMD3<Float>(0, 0, -1.5),
+                        threshold: 0.25
+                    )
+                    if !stillLooking {
+                        waitingForPinch = false
+                        dwellProgress = 0.8
+                    }
+                    try? await Task.sleep(for: .milliseconds(16))
+                    continue
+                }
+
                 await eyeTracking.updateGaze()
 
                 let isLooking = eyeTracking.isLookingAt(
@@ -386,7 +434,8 @@ struct ExerciseWithMapView: View {
                 if isLooking {
                     dwellProgress += Float(1.0 / 60.0)
                     if dwellProgress >= 1.0 {
-                        eyeTracking.recordHit()
+                        dwellProgress = 1.0
+                        waitingForPinch = true
                     }
                 } else {
                     dwellProgress = max(0, dwellProgress - Float(0.5 / 60.0))
@@ -399,7 +448,8 @@ struct ExerciseWithMapView: View {
                 try? await Task.sleep(for: .milliseconds(16))
             }
 
-            // 웨이포인트 완료
+            // 웨이포인트 완료 (핀치로 확인됨)
+            eyeTracking.recordHit()
             combo += 1
             let comboMultiplier = min(combo, 5)
             score += 100 * comboMultiplier

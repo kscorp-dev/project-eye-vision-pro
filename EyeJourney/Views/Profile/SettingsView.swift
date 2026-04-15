@@ -100,7 +100,7 @@ struct SettingsView: View {
                 HStack {
                     Label("버전", systemImage: "info.circle")
                     Spacer()
-                    Text("0.4")
+                    Text("0.5")
                         .foregroundStyle(.secondary)
                 }
 
@@ -167,12 +167,12 @@ struct PrivacyPolicyView: View {
                 Group {
                     sectionText(
                         title: "1. 수집하는 정보",
-                        content: "EyeJourney는 안구운동을 위해 아이트래킹 데이터를 수집합니다. 이 데이터는 기기에서만 처리되며 외부 서버로 전송되지 않습니다."
+                        content: "EyeJourney는 안구운동 가이드를 위해 디바이스 방향(Device Anchor) 데이터를 활용합니다. 원시 시선(eye gaze) 좌표는 수집하지 않으며, 모든 데이터는 기기에서만 처리되고 외부 서버로 전송되지 않습니다."
                     )
 
                     sectionText(
                         title: "2. 정보 사용 목적",
-                        content: "수집된 시선 데이터는 운동 정확도 계산, 진행도 추적, 맞춤 운동 프로그램 제공에만 사용됩니다."
+                        content: "디바이스 방향 데이터는 운동 정확도 계산, 진행도 추적, 맞춤 운동 프로그램 제공에만 사용됩니다."
                     )
 
                     sectionText(

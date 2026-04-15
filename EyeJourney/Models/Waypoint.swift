@@ -78,13 +78,4 @@ enum GuideType: String, Codable, CaseIterable {
         }
     }
 
-    var systemImageName: String {
-        switch self {
-        case .butterfly: return "leaf.fill"
-        case .firefly: return "sparkle"
-        case .star: return "star.fill"
-        case .petal: return "camera.macro"
-        case .bird: return "bird.fill"
-        }
-    }
 }

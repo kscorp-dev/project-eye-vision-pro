@@ -21,7 +21,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSEyeTrackingUsageDescription</key>
-	<string>EyeJourney uses eye tracking to provide interactive eye exercise experiences. Your eye movement data is used only for gameplay and is never shared.</string>
+	<string>EyeJourney uses device orientation to guide eye exercises. No raw eye gaze data is collected — only device direction is used for gameplay, and all data stays on your device.</string>
 	<key>NSWorldSensingUsageDescription</key>
 	<string>EyeJourney uses world sensing to place exercise guide points in your space.</string>
 	<key>NSHandsTrackingUsageDescription</key>

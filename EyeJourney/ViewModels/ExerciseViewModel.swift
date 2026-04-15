@@ -46,6 +46,9 @@ final class ExerciseViewModel {
     var currentPhaseDescription: String { currentPhase.description }
     var dwellProgress: Float = 0
 
+    /// Look+Pinch: dwell이 완료되어 핀치 대기 중인지 여부 (눈 운동 전용)
+    var waitingForPinch: Bool = false
+
     // 목 운동 상태
     var isNeckExercise: Bool { currentExerciseType.isNeckExercise }
     var currentHeadPitch: Float { headTracking.pitch }
@@ -154,9 +157,16 @@ final class ExerciseViewModel {
         await runNeckTrackingLoop()
     }
 
-    /// 시선 추적 루프
+    /// 시선 추적 루프 (Look+Pinch 방식)
+    /// dwell이 100% 차면 waitingForPinch=true → 사용자 핀치로 확인
     private func runEyeTrackingLoop() async {
         while gameEngine.state == .playing {
+            // 핀치 대기 중이면 추적만 유지하고 진행하지 않음
+            if waitingForPinch {
+                try? await Task.sleep(for: .milliseconds(16))
+                continue
+            }
+
             await eyeTracking.updateGaze()
 
             let isLooking = eyeTracking.isLookingAt(
@@ -167,16 +177,14 @@ final class ExerciseViewModel {
             if isLooking {
                 dwellProgress += Float(1.0 / 60.0 / currentPhase.speed)
                 if dwellProgress >= 1.0 {
-                    gameEngine.onWaypointReached()
-                    eyeTracking.recordHit()
-                    dwellProgress = 0
-
-                    if gameEngine.state == .completed {
-                        await advancePhase()
-                    }
+                    dwellProgress = 1.0
+                    waitingForPinch = true
                 }
             } else {
-                dwellProgress = max(0, dwellProgress - Float(2.0 / 60.0))
+                // 시선이 벗어나면 핀치 대기도 해제
+                if dwellProgress > 0 {
+                    dwellProgress = max(0, dwellProgress - Float(2.0 / 60.0))
+                }
                 if dwellProgress == 0 {
                     eyeTracking.recordMiss()
                     gameEngine.onMissed()
@@ -184,6 +192,20 @@ final class ExerciseViewModel {
             }
 
             try? await Task.sleep(for: .milliseconds(16))
+        }
+    }
+
+    /// 사용자 핀치(탭) 제스처로 웨이포인트 확인 (Look+Pinch)
+    func confirmWaypoint() {
+        guard waitingForPinch else { return }
+        waitingForPinch = false
+        dwellProgress = 0
+
+        gameEngine.onWaypointReached()
+        eyeTracking.recordHit()
+
+        if gameEngine.state == .completed {
+            Task { await advancePhase() }
         }
     }
 

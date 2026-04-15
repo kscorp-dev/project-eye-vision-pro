@@ -1,11 +1,13 @@
 import SwiftUI
 import RealityKit
 
-/// 몰입형 공간에서의 안구운동 뷰 (3D 가이드 포인트)
+/// 몰입형 공간에서의 안구운동 뷰 (3D 가이드 포인트, Look+Pinch)
 struct ExerciseImmersiveView: View {
     @Environment(AppModel.self) private var appModel
     @State private var eyeTracking = EyeTrackingService()
     @State private var gameEngine = GameEngine()
+    @State private var dwellProgress: Float = 0
+    @State private var waitingForPinch = false
 
     var body: some View {
         RealityView { content in
@@ -25,6 +27,19 @@ struct ExerciseImmersiveView: View {
             // 가이드 포인트 위치 업데이트
             updateGuideEntities(in: content)
         }
+        // Look+Pinch: 가이드 포인트 탭(핀치)으로 확인
+        .gesture(
+            SpatialTapGesture()
+                .targetedToAnyEntity()
+                .onEnded { _ in
+                    if waitingForPinch {
+                        waitingForPinch = false
+                        dwellProgress = 0
+                        gameEngine.onWaypointReached()
+                        eyeTracking.recordHit()
+                    }
+                }
+        )
         .task {
             await eyeTracking.start()
             await trackingLoop()
@@ -70,9 +85,14 @@ struct ExerciseImmersiveView: View {
         }
     }
 
-    /// 시선 추적 루프
+    /// 시선 추적 루프 (Look+Pinch)
     private func trackingLoop() async {
         while eyeTracking.isTrackingActive && gameEngine.state == .playing {
+            if waitingForPinch {
+                try? await Task.sleep(for: .milliseconds(16))
+                continue
+            }
+
             await eyeTracking.updateGaze()
 
             let isLooking = eyeTracking.isLookingAt(
@@ -81,13 +101,20 @@ struct ExerciseImmersiveView: View {
             )
 
             if isLooking {
-                eyeTracking.recordHit()
+                dwellProgress += Float(1.0 / 60.0 / 1.5)
+                if dwellProgress >= 1.0 {
+                    dwellProgress = 1.0
+                    waitingForPinch = true
+                }
             } else {
-                eyeTracking.recordMiss()
-                gameEngine.onMissed()
+                dwellProgress = max(0, dwellProgress - Float(2.0 / 60.0))
+                if dwellProgress == 0 {
+                    eyeTracking.recordMiss()
+                    gameEngine.onMissed()
+                }
             }
 
-            try? await Task.sleep(for: .milliseconds(16)) // ~60fps
+            try? await Task.sleep(for: .milliseconds(16))
         }
     }
 }

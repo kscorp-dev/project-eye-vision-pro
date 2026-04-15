@@ -44,11 +44,12 @@
 [루트 미리보기] ─── 코스 난이도, 예상 시간, 운동 유형 확인
     │
     ▼
-[운동 시작] ─── 가이드 포인트 따라 시선 이동
+[운동 시작] ─── 가이드 포인트 따라 시선 이동 (Look+Pinch)
     │
-    ├── 경로 포인트 추적 (안구운동)
-    ├── 갈림길 선택 (시선으로)
+    ├── 가이드 포인트 바라보기(Look) → 핀치로 확인(Pinch)
+    ├── 갈림길 선택 (시선+핀치)
     ├── 이벤트 발생 (동물, 자연현상)
+    ├── 목 운동 페이즈 (머리 방향으로 자동 인식)
     └── 보너스 포인트 수집
             │
             ▼
@@ -82,7 +83,7 @@
   - 나비, 반딧불, 별, 꽃잎 등 자연 요소
 - **진행도 바** - 현재 경로 진행률
 - **점수 표시** - 실시간 정확도 피드백
-- **갈림길 UI** - 2~3개 방향 선택지 (시선 3초 유지로 선택)
+- **갈림길 UI** - 2~3개 방향 선택지 (시선으로 바라보고 핀치로 선택)
 
 ### 4.4 결과 화면 (ResultView)
 - **운동 요약 카드**
@@ -124,14 +125,17 @@
 - **구현**: 새떼의 원형 비행 패턴, 회오리 따라가기
 - **난이도 조절**: 원의 크기, 회전 속도
 
-### 5.2 운동 프로그램
+### 5.2 운동 프로그램 (7종)
 
-| 프로그램 | 시간 | 구성 | 대상 |
-|----------|------|------|------|
-| 모닝 스트레칭 | 3분 | 부드러운 추적 + 초점 전환 | 기상 직후 |
-| 점심 리프레시 | 5분 | 빠른 추적 + 원형 운동 | 오후 피로 해소 |
-| 풀 코스 여행 | 10분 | 모든 유형 종합 | 본격 운동 |
-| 취침 전 릴렉스 | 3분 | 느린 추적 + 깊은 초점 | 취침 전 이완 |
+| 프로그램 | 시간 | 유형 | 구성 | 대상 |
+|----------|------|------|------|------|
+| 모닝 스트레칭 | 3분 | 눈 | 부드러운 추적 + 초점 전환 + 원형 | 기상 직후 |
+| 점심 리프레시 | 5분 | 눈 | 빠른 추적 + 원형 + 추적 + 초점 | 오후 피로 해소 |
+| 풀 코스 여행 | 10분 | 눈 | 5단계 종합 눈 운동 | 본격 운동 |
+| 취침 전 릴렉스 | 3분 | 눈 | 느린 추적 + 깊은 초점 | 취침 전 이완 |
+| 목 스트레칭 | 5분 | **목** | 굴곡 → 회전 → 기울이기 → 돌리기 | 목 케어 |
+| 눈+목 콤보 | 7분 | **눈+목** | 눈 운동과 목 운동 교대 | 종합 케어 |
+| 오피스 케어 | 5분 | **눈+목** | 사무실에서 간단히 | 업무 중 |
 
 ---
 
@@ -222,14 +226,20 @@ enum Difficulty: String, Codable {
     case beginner, intermediate, advanced
 }
 
-enum ExerciseType: String, Codable {
+enum ExerciseType: String, Codable, CaseIterable {
+    // 눈 운동 (4종)
     case smoothPursuit    // 부드러운 추적
     case saccade          // 빠른 시선 이동
     case vergence         // 초점 전환
     case circularTracking // 원형 추적
+    // 목 운동 (4종)
+    case neckFlexion      // 목 앞뒤 굴곡
+    case neckRotation     // 목 좌우 회전
+    case neckLateralTilt  // 목 좌우 기울이기
+    case neckCircle       // 목 돌리기
 }
 
-enum GuideType: String, Codable {
+enum GuideType: String, Codable, CaseIterable {
     case butterfly, firefly, star, petal, bird
 }
 ```
@@ -263,9 +273,10 @@ enum GuideType: String, Codable {
 
 #### EyeTrackingService
 - ARKit의 `ARSession` + `WorldTrackingProvider` 활용
-- 시선 좌표(gaze point) 실시간 수집
-- 시선 속도, 방향, 체류 시간 계산
-- 가이드 포인트와의 거리 기반 정확도 산출
+- Device Anchor 기반 디바이스 방향(forward vector) 추적
+- 가이드 포인트와의 방향 일치도 기반 정확도 산출
+- Look+Pinch 인터랙션: dwell 후 핀치로 명시적 확인
+- ※ Apple 프라이버시 정책에 따라 raw eye gaze 좌표는 사용하지 않음
 
 #### MapService
 - MapKit의 `MKMapView` (Look Around) 활용
@@ -309,7 +320,7 @@ enum GuideType: String, Codable {
 - [x] GitHub 레포 생성
 - [x] 프로젝트 구조 설정
 - [x] 기획 문서 작성
-- [ ] Xcode 프로젝트 생성 (visionOS 타겟)
+- [x] Xcode 프로젝트 생성 (visionOS 타겟)
 
 ### Phase 2: 아이트래킹 프로토타입 (2주)
 - [ ] ARKit Eye Tracking 세션 구성
