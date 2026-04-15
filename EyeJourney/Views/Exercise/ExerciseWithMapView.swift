@@ -22,11 +22,13 @@ struct ExerciseWithMapView: View {
     @State private var countdown = 3
     @State private var isWalkingBetweenPoints = false
     @State private var sessionSaved = false
+    @State private var startTime: Date?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Environment(SoundService.self) private var soundService
+    @Environment(MusicService.self) private var musicService
 
     private var currentWaypoint: RouteWaypoint? {
         guard currentWaypointIndex < region.waypoints.count else { return nil }
@@ -53,12 +55,16 @@ struct ExerciseWithMapView: View {
             }
         }
         .task {
+            if musicService.isPlaying {
+                musicService.setExerciseVolume()
+            }
             await prepareAndStart()
         }
         .onDisappear {
             eyeTracking.stop()
             mapService.stopFlyover()
             preloader.clearCache()
+            musicService.restoreVolume()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background || newPhase == .inactive {
@@ -177,6 +183,9 @@ struct ExerciseWithMapView: View {
 
             // 하단: 이동 중 표시
             VStack(spacing: 8) {
+                MiniPlayerView()
+                    .padding(.horizontal)
+
                 HStack(spacing: 8) {
                     ProgressView()
                         .scaleEffect(0.8)
@@ -326,7 +335,8 @@ struct ExerciseWithMapView: View {
             try? await Task.sleep(for: .seconds(1))
         }
 
-        // 5) 아이트래킹 시작
+        // 5) 시작 시간 기록 & 아이트래킹 시작
+        startTime = Date()
         await eyeTracking.start()
 
         // 6) 운동 루프 시작
@@ -413,7 +423,8 @@ struct ExerciseWithMapView: View {
         guard !sessionSaved else { return }
         sessionSaved = true
 
-        let session = ExerciseSession(routeId: UUID())
+        let routeUUID = UUID(uuidString: region.id) ?? UUID()
+        let session = ExerciseSession(routeId: routeUUID)
         session.completedAt = Date()
         session.totalPoints = score
         session.accuracy = Double(eyeTracking.accuracy)
@@ -429,6 +440,9 @@ struct ExerciseWithMapView: View {
         }
         profile.updateStreak()
         profile.totalSessions += 1
+        if let start = startTime {
+            profile.totalExerciseTime += Date().timeIntervalSince(start)
+        }
         try? modelContext.save()
     }
 

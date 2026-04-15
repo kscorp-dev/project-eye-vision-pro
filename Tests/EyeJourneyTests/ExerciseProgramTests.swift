@@ -6,7 +6,7 @@ struct ExerciseProgramTests {
 
     @Test("모든 프로그램이 존재")
     func allProgramsExist() {
-        #expect(ExerciseProgram.allPrograms.count == 4)
+        #expect(ExerciseProgram.allPrograms.count == 7)
     }
 
     @Test("모닝 스트레칭 구성")

@@ -3,6 +3,7 @@ import SwiftData
 
 struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AchievementService.self) private var achievementService
     @Query(sort: \ExerciseSession.startedAt, order: .reverse)
     private var allSessions: [ExerciseSession]
     @State private var profile = UserProfile()
@@ -63,7 +64,7 @@ struct ProfileView: View {
             .buttonStyle(.plain)
 
             NavigationLink {
-                AchievementsView(unlockedIds: Set(profile.stamps.map(\.regionName)))
+                AchievementsView(unlockedIds: Set(achievementService.unlockedAchievements.map(\.id)))
             } label: {
                 quickMenuItem(icon: "trophy.fill", label: "업적", color: .yellow)
             }

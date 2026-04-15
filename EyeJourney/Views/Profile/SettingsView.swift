@@ -6,6 +6,7 @@ struct SettingsView: View {
     @AppStorage("guidePointStyle") private var guidePointStyle = "firefly"
     @AppStorage("soundEnabled") private var soundEnabled = true
     @AppStorage("hapticEnabled") private var hapticEnabled = true
+    @AppStorage("backgroundMusicEnabled") private var backgroundMusicEnabled = true
     @AppStorage("dailyReminder") private var dailyReminder = true
     @AppStorage("reminderHour") private var reminderHour = 9
     @AppStorage("language") private var language = "ko"
@@ -70,6 +71,21 @@ struct SettingsView: View {
                 }
             }
 
+            // 음악 & 팟캐스트
+            Section("배경 음악") {
+                Toggle(isOn: $backgroundMusicEnabled) {
+                    Label("운동 중 음악 재생", systemImage: "music.note")
+                }
+                if backgroundMusicEnabled {
+                    HStack {
+                        Label("연동 서비스", systemImage: "music.note.house")
+                        Spacer()
+                        Text("Apple Music")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
             // 접근성
             Section("접근성") {
                 NavigationLink {
@@ -84,7 +100,7 @@ struct SettingsView: View {
                 HStack {
                     Label("버전", systemImage: "info.circle")
                     Spacer()
-                    Text("1.0.0")
+                    Text("0.4")
                         .foregroundStyle(.secondary)
                 }
 

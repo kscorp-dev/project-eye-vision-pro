@@ -306,20 +306,20 @@ final class ExerciseViewModel {
     var activeBranch: BranchChoice? { gameEngine.activeBranch }
 
     func dismissEvent() {
-        gameEngine.activeEvent = nil
+        gameEngine.completeEvent()
     }
 
     func selectBranch(_ option: BranchOption) {
-        gameEngine.activeBranch = nil
+        gameEngine.selectBranch(option)
     }
 
     // MARK: - Session Persistence
 
-    func saveSession(modelContext: ModelContext) {
+    func saveSession(modelContext: ModelContext, routeId: UUID? = nil) {
         guard !sessionSaved else { return }
         sessionSaved = true
 
-        let session = ExerciseSession(routeId: UUID())
+        let session = ExerciseSession(routeId: routeId ?? UUID())
         session.completedAt = Date()
         session.totalPoints = score
         session.accuracy = isNeckExercise

@@ -7,6 +7,7 @@ struct ExerciseView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SoundService.self) private var soundService
     @Environment(AchievementService.self) private var achievementService
+    @Environment(MusicService.self) private var musicService
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -48,9 +49,18 @@ struct ExerciseView: View {
         .task {
             await viewModel.startCountdown()
         }
+        .onAppear {
+            if musicService.isPlaying {
+                musicService.setExerciseVolume()
+            }
+        }
+        .onDisappear {
+            musicService.restoreVolume()
+        }
         .onChange(of: viewModel.gameState) { _, newState in
             if newState == .completed {
                 soundService.play(.exerciseComplete)
+                musicService.restoreVolume()
                 viewModel.saveSession(modelContext: modelContext)
                 checkAchievements()
             }
@@ -165,6 +175,9 @@ struct ExerciseView: View {
 
     private var exerciseFooter: some View {
         VStack(spacing: 8) {
+            // 미니 플레이어
+            MiniPlayerView()
+
             // 콤보 표시
             if viewModel.combo > 1 {
                 Text("COMBO x\(viewModel.combo)")

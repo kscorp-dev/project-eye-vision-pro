@@ -6,6 +6,7 @@ struct EyeJourneyApp: App {
     @State private var appModel = AppModel()
     @State private var soundService = SoundService()
     @State private var achievementService = AchievementService()
+    @State private var musicService = MusicService()
 
     var body: some Scene {
         WindowGroup {
@@ -13,6 +14,7 @@ struct EyeJourneyApp: App {
                 .environment(appModel)
                 .environment(soundService)
                 .environment(achievementService)
+                .environment(musicService)
         }
         .modelContainer(for: [
             UserProfile.self,

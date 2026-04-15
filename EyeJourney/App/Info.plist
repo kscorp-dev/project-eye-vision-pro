@@ -26,6 +26,8 @@
 	<string>EyeJourney uses world sensing to place exercise guide points in your space.</string>
 	<key>NSHandsTrackingUsageDescription</key>
 	<string>EyeJourney uses hand tracking to detect gestures for navigation.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>EyeJourney는 운동 중 배경 음악과 팟캐스트를 재생하기 위해 Apple Music에 접근합니다.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
