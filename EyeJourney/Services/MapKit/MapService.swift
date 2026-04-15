@@ -101,6 +101,67 @@ final class MapService {
         isAnimating = false
     }
 
+    // MARK: - Walking Mode (걸어가기 모드)
+
+    /// 보간된 경로를 따라 걸어가듯 부드럽게 이동
+    /// 각 스텝을 짧은 간격으로 전환하여 연속적인 이동 느낌 제공
+    func walkAlongSteps(
+        _ steps: [PathInterpolator.CameraStep],
+        preloader: RoutePreloader,
+        stepDuration: Double = 0.4,
+        onStepReached: @escaping (Int, PathInterpolator.CameraStep) -> Void
+    ) async {
+        animationTask?.cancel()
+        isAnimating = true
+        flyoverProgress = 0
+
+        let total = steps.count
+
+        animationTask = Task {
+            for (index, step) in steps.enumerated() {
+                guard !Task.isCancelled else { break }
+
+                // 다음 구간 프리로드 트리거
+                preloader.onStepReached(currentIndex: index, steps: steps)
+
+                // 카메라 이동 (짧은 애니메이션으로 부드럽게)
+                withAnimation(.easeInOut(duration: stepDuration)) {
+                    mapCameraPosition = .camera(MapCamera(
+                        centerCoordinate: step.coordinate,
+                        distance: step.distance,
+                        heading: step.heading,
+                        pitch: step.pitch
+                    ))
+                    currentHeading = step.heading
+                }
+
+                flyoverProgress = Float(index + 1) / Float(total)
+
+                // 콜백: 웨이포인트 도달 알림
+                onStepReached(index, step)
+
+                // 스텝 간 대기 (걸어가는 속도)
+                try? await Task.sleep(for: .seconds(stepDuration * 0.9))
+            }
+
+            isAnimating = false
+            flyoverProgress = 1.0
+        }
+    }
+
+    /// 특정 스텝으로 부드럽게 이동 (사용자가 웨이포인트 완료 후 다음 구간 시작)
+    func smoothMoveTo(step: PathInterpolator.CameraStep, duration: Double = 0.6) {
+        withAnimation(.easeInOut(duration: duration)) {
+            mapCameraPosition = .camera(MapCamera(
+                centerCoordinate: step.coordinate,
+                distance: step.distance,
+                heading: step.heading,
+                pitch: step.pitch
+            ))
+            currentHeading = step.heading
+        }
+    }
+
     /// 두 좌표 사이의 방향(heading) 계산
     static func heading(
         from: CLLocationCoordinate2D,

@@ -5,7 +5,7 @@
 [![Platform](https://img.shields.io/badge/Platform-visionOS%202.0+-blue)]()
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange)]()
 [![License](https://img.shields.io/badge/License-MIT-green)]()
-[![Version](https://img.shields.io/badge/Version-0.1-brightgreen)]()
+[![Version](https://img.shields.io/badge/Version-0.2-brightgreen)]()
 
 ## Overview
 
@@ -125,7 +125,11 @@ EyeJourney/
 │   │   ├── EyeTrackingService  # 디바이스 방향 기반 시선 처리
 │   │   ├── HeadTrackingService # 머리 방향 추적 (목 운동)
 │   │   └── GazeTargetComponent # RealityKit ECS
-│   ├── MapKit/                 # Apple MapKit 연동
+│   ├── MapKit/
+│   │   ├── MapService          # 카메라 제어 + 걸어가기 모드
+│   │   ├── RouteRegion         # 지역 데이터 (4개 지역)
+│   │   ├── PathInterpolator    # 경로 보간 (부드러운 걷기)
+│   │   └── RoutePreloader      # 맵 타일 사전 로딩
 │   ├── GameEngine/
 │   │   ├── GameEngine          # 게임 로직 (눈+목 패턴 생성)
 │   │   ├── ExerciseProgram     # 7종 운동 프로그램
@@ -153,6 +157,13 @@ EyeJourney/
 | **IAP** | 개별 지역 팩 구매 ($1.99/팩) |
 
 ## Version History
+
+### v0.2 - 걸어가기 모드 & 사전 로딩 (2026-04-15)
+- `PathInterpolator` 신규 — 웨이포인트 사이 대원(Great Circle) 경로 보간, ease-in-out 카메라 가감속
+- `RoutePreloader` 신규 — MKMapSnapshotter로 맵 타일 사전 캐싱, Look Around 장면 프리로드
+- `MapService` 걸어가기 모드 — 보간된 스텝을 0.4초 간격으로 전환, 끊김 없는 이동
+- `ExerciseWithMapView` 리팩토링 — loading→countdown→walking→exercise→completed 5단계 플로우
+- 로딩 화면: 프리로드 진행률 표시, 이동 중 표시 UI 추가
 
 ### v0.1 - 목 운동 기능 추가 (2026-04-15)
 - `HeadTrackingService` 신규 — WorldTrackingProvider device anchor에서 pitch/yaw/roll 추출
