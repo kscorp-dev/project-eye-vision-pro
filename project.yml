@@ -1,0 +1,42 @@
+name: EyeJourney
+options:
+  bundleIdPrefix: com.kscorp
+  deploymentTarget:
+    visionOS: "2.0"
+  xcodeVersion: "16.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    GENERATE_INFOPLIST_FILE: YES
+
+targets:
+  EyeJourney:
+    type: application
+    platform: visionOS
+    sources:
+      - path: EyeJourney
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kscorp.eyejourney
+        INFOPLIST_FILE: EyeJourney/App/Info.plist
+        PRODUCT_NAME: EyeJourney
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SUPPORTED_PLATFORMS: "xros"
+        TARGETED_DEVICE_FAMILY: "7"
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+    entitlements:
+      path: EyeJourney/App/EyeJourney.entitlements
+
+  EyeJourneyTests:
+    type: bundle.unit-test
+    platform: visionOS
+    sources:
+      - path: Tests/EyeJourneyTests
+    dependencies:
+      - target: EyeJourney
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kscorp.eyejourney.tests
