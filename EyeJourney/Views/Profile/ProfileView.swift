@@ -11,6 +11,9 @@ struct ProfileView: View {
                     // 프로필 헤더
                     profileHeader
 
+                    // 퀵 메뉴
+                    quickMenu
+
                     // 통계 카드
                     statsGrid
 
@@ -23,7 +26,55 @@ struct ProfileView: View {
                 .padding()
             }
             .navigationTitle("프로필")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                    }
+                }
+            }
         }
+    }
+
+    private var quickMenu: some View {
+        HStack(spacing: 12) {
+            NavigationLink {
+                StatsDashboardView(sessions: recentSessions, profile: profile)
+            } label: {
+                quickMenuItem(icon: "chart.bar.fill", label: "상세 통계", color: .blue)
+            }
+            .buttonStyle(.plain)
+
+            NavigationLink {
+                AchievementsView(unlockedIds: Set(profile.stamps.map(\.regionName)))
+            } label: {
+                quickMenuItem(icon: "trophy.fill", label: "업적", color: .yellow)
+            }
+            .buttonStyle(.plain)
+
+            NavigationLink {
+                SettingsView()
+            } label: {
+                quickMenuItem(icon: "gearshape.fill", label: "설정", color: .gray)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func quickMenuItem(icon: String, label: String, color: Color) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(color.gradient)
+            Text(label)
+                .font(.caption2)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .hoverEffect()
     }
 
     // MARK: - Profile Header
