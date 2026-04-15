@@ -59,6 +59,9 @@ final class Stamp {
     var earnedAt: Date
     var routeId: UUID
 
+    @Relationship(deleteRule: .noAction, inverse: \UserProfile.stamps)
+    var userProfile: UserProfile?
+
     init(
         regionName: String,
         regionNameLocalized: String,

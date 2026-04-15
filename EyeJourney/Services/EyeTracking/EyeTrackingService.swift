@@ -1,7 +1,6 @@
 import ARKit
 import RealityKit
 import SwiftUI
-import Combine
 
 /// Apple Vision Pro의 아이트래킹 데이터를 수집하고 처리하는 서비스
 @Observable

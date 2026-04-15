@@ -15,6 +15,7 @@ final class Waypoint {
     var hasBranch: Bool
     var branchOptionNames: [String]
 
+    @Relationship(deleteRule: .noAction, inverse: \Route.waypoints)
     var route: Route?
 
     init(
@@ -74,6 +75,16 @@ enum GuideType: String, Codable, CaseIterable {
         case .star: return "white"
         case .petal: return "pink"
         case .bird: return "blue"
+        }
+    }
+
+    var systemImageName: String {
+        switch self {
+        case .butterfly: return "leaf.fill"
+        case .firefly: return "sparkle"
+        case .star: return "star.fill"
+        case .petal: return "camera.macro"
+        case .bird: return "bird.fill"
         }
     }
 }

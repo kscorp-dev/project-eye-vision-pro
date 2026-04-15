@@ -249,12 +249,13 @@ enum GuideType: String, Codable {
 │  HomeVM · ExerciseVM · ProfileVM · MapVM     │
 ├─────────────────────────────────────────────┤
 │                 Services                     │
-│  EyeTrackingService · MapService             │
-│  GameEngine · DataStoreService               │
+│  EyeTrackingService · HeadTrackingService    │
+│  GameEngine · MapService · MusicService      │
+│  SoundService · AchievementService           │
 ├─────────────────────────────────────────────┤
 │               Frameworks                     │
-│  ARKit · MapKit · RealityKit                 │
-│  SwiftData · StoreKit 2                      │
+│  ARKit · MapKit · RealityKit · MusicKit      │
+│  SwiftData · StoreKit 2 · MediaPlayer        │
 └─────────────────────────────────────────────┘
 ```
 
@@ -278,11 +279,10 @@ enum GuideType: String, Codable {
 - 점수 계산 및 진행도 관리
 - 갈림길 선택 로직 (3초 dwell time)
 
-#### DataStoreService
-- SwiftData 기반 로컬 저장소
-- 운동 세션 기록
-- 사용자 프로필 및 설정
-- 스탬프 컬렉션
+#### MusicService
+- MusicKit + MediaPlayer 기반 배경 음악/팟캐스트 재생
+- Apple Music 카탈로그 검색 및 운동용 플레이리스트 자동 재생
+- 운동 중 볼륨 자동 조절 (30% ↔ 70%)
 
 ---
 

@@ -25,6 +25,10 @@ final class MusicService {
     // MARK: - System Music Player
 
     private let player = MPMusicPlayerController.systemMusicPlayer
+    @ObservationIgnored
+    private var playbackObserver: Any?
+    @ObservationIgnored
+    private var nowPlayingObserver: Any?
 
     init() {
         observePlaybackState()
@@ -152,14 +156,14 @@ final class MusicService {
 
     private func observePlaybackState() {
         player.beginGeneratingPlaybackNotifications()
-        NotificationCenter.default.addObserver(
+        playbackObserver = NotificationCenter.default.addObserver(
             forName: .MPMusicPlayerControllerPlaybackStateDidChange,
             object: player,
             queue: .main
         ) { [weak self] _ in
             self?.syncNowPlaying()
         }
-        NotificationCenter.default.addObserver(
+        nowPlayingObserver = NotificationCenter.default.addObserver(
             forName: .MPMusicPlayerControllerNowPlayingItemDidChange,
             object: player,
             queue: .main
@@ -169,6 +173,8 @@ final class MusicService {
     }
 
     deinit {
+        if let playbackObserver { NotificationCenter.default.removeObserver(playbackObserver) }
+        if let nowPlayingObserver { NotificationCenter.default.removeObserver(nowPlayingObserver) }
         player.endGeneratingPlaybackNotifications()
     }
 }

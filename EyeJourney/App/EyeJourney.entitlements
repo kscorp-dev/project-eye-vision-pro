@@ -4,6 +4,8 @@
 <dict>
 	<key>com.apple.developer.arkit</key>
 	<true/>
+	<key>com.apple.developer.musickit</key>
+	<true/>
 	<key>com.apple.developer.spatial-persona.allow</key>
 	<true/>
 	<key>com.apple.developer.visionos.main-scene-immersive-space-types</key>
